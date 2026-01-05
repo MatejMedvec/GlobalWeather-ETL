@@ -87,12 +87,12 @@ SELECT *
 FROM WEATHER_SOURCE_LLC_FROSTBYTE.ONPOINT_ID.FORECAST_DAY;
 ```
 
-### 🔄 Transform & 📤 Load
+### Transform & Load
 
 V tejto fáze sme vytvorili dimenzionálne tabuľky a faktovú tabuľku vrátane výpočtov pomocou window functions.
 Podrobné SQL skripty sa nachádzajú v priečinku `/sql/`.
 
-### ✅ Validácia dát
+### Validácia dát
 
 ```sql
 -- Kontrola chýbajúcich kľúčov
