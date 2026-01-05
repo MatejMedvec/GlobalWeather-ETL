@@ -109,7 +109,7 @@ FROM DIMENSIONAL.FACT_WEATHER_DAY;
 ---
 
 ## 4. Vizualizácia dát
-
+![Dashboard vizualizácií](/img/Dashboard.png)
 ### 1. Priemerná predpovedaná teplota v čase
 
 ```sql
