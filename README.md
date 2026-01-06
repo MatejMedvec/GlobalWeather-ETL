@@ -1,12 +1,16 @@
 # GlobalWeather-ETL
 
-**Projekt na Databázové Technológie – ELT proces v Snowflake**
+# GlobalWeather-ETL
 
-**Autori:**
-Matej Medvec
-Juraj Pálenkáš
+Tento repozitár predstavuje ukážkovú implementáciu **ELT procesu v prostredí Snowflake** a návrh **dátového skladu s hviezdicovou schémou (Star Schema)** na základe meteorologických dát.
 
-**Dátum:** Január 2026
+Projekt pracuje s datasetom **Weather Source LLC – Frostbyte: OnPoint ID Forecast Day**, ktorý je dostupný prostredníctvom **Snowflake Marketplace** a obsahuje denné hyper-lokálne predpovede počasia pre vybrané geografické lokality.
+
+Cieľom projektu je analyzovať **teplotné a zrážkové trendy v čase a priestore** a demonštrovať návrh **normalizovaného modelu (3NF)** aj **dimenzionálneho modelu** vhodného pre analytické dotazy a reporting.
+
+Výsledný dátový model umožňuje **multidimenzionálnu analýzu** meteorologických údajov, ako je porovnanie priemerných teplôt medzi lokalitami, analýza výskytu zrážok alebo sledovanie vývoja počasia v čase.
+
+Projekt slúži ako **referenčná ukážka správnej dokumentácie, implementácie ELT procesu a tvorby vizualizácií** pre záverečný projekt z predmetu *Databázové technológie*.
 
 ---
 
