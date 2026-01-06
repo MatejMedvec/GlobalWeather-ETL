@@ -308,7 +308,7 @@ FROM DIMENSIONAL.FACT_WEATHER_DAY;
 V tejto časti sú prezentované vybrané analytické dotazy nad dimenzionálnym modelom, ktoré demonštrujú možnosti viacdimenzionálnej analýzy meteorologických dát a slúžia ako podklad pre následné vizualizácie.
 
 <p align="center">
-  <img src="/img/Dashboard.png" alt="Dashboard vizualizácií" width="900">
+  <img src="/img/Dashboard.png" alt="Dashboard vizualizácií" width="100%">
 </p>
 
 <p align="center">
@@ -319,7 +319,7 @@ V tejto časti sú prezentované vybrané analytické dotazy nad dimenzionálnym
 
 ### 4.1 Priemerná predpovedaná teplota v čase
 
-Dotaz analyzuje vývoj priemernej predpovedanej teploty v čase naprieč všetkými lokalitami. Výsledok umožňuje identifikovať globálne teplotné trendy a sezónne výkyvy.
+Dotaz agreguje priemernú predpovedanú teplotu podľa dátumu naprieč všetkými lokalitami. Výsledná časová rada umožňuje sledovať celkový vývoj teploty a krátkodobé výkyvy v čase.
 
 ```sql
 SELECT d.FULL_DATE, AVG(f.AVG_TEMP_F) AS AVG_TEMP_F
@@ -329,11 +329,19 @@ GROUP BY d.FULL_DATE
 ORDER BY d.FULL_DATE;
 ```
 
+<p align="center">
+  <img src="/img/Graf 1.png" alt="Priemerná predpovedaná teplota v čase" width="100%">
+</p>
+
+<p align="center">
+  <em>Graf 1 Priemerná predpovedaná teplota v čase</em>
+</p>
+
 ---
 
 ### 4.2 Top 15 miest podľa priemernej predpovedanej teploty
 
-Dotaz identifikuje lokality s najvyššou priemernou predpovedanou teplotou za celé sledované obdobie. Analýza je vhodná na porovnanie klimatických podmienok medzi mestami.
+Dotaz vypočítava priemernú teplotu pre jednotlivé mestá za celé sledované obdobie. Vizualizácia umožňuje porovnať lokality s dlhodobo najvyššími priemernými teplotami.
 
 ```sql
 SELECT l.CITY_NAME, AVG(f.AVG_TEMP_F) AS AVG_TEMP_F
@@ -344,11 +352,19 @@ ORDER BY AVG_TEMP_F DESC
 LIMIT 15;
 ```
 
+<p align="center">
+  <img src="/img/Graf 2.png" alt="Top 15 miest podľa teploty" width="100%">
+</p>
+
+<p align="center">
+  <em>Graf 2 Top 15 miest podľa priemernej predpovedanej teploty</em>
+</p>
+
 ---
 
 ### 4.3 Priemerná teplota podľa typu zrážok
 
-Cieľom dotazu je preskúmať vzťah medzi typom zrážok a priemernou teplotou. Výsledok ukazuje, ako sa teplota líši v dňoch bez zrážok, s dažďom alebo so snežením.
+Dotaz analyzuje vzťah medzi typom zrážok a priemernou teplotou. Výsledok poukazuje na rozdiely teplôt medzi dňami bez zrážok, s dažďom a so snežením.
 
 ```sql
 SELECT PRECIPITATION_TYPE, AVG(AVG_TEMP_F) AS AVG_TEMP_F
@@ -357,11 +373,19 @@ GROUP BY PRECIPITATION_TYPE
 ORDER BY AVG_TEMP_F DESC;
 ```
 
+<p align="center">
+  <img src="/img/Graf 3.png" alt="Teplota podľa typu zrážok" width="100%">
+</p>
+
+<p align="center">
+  <em>Graf 3 Priemerná teplota podľa typu zrážok</em>
+</p>
+
 ---
 
 ### 4.4 Rozdelenie predpovedí podľa teplotného pásma
 
-Dotaz zobrazuje počet dní spadajúcich do jednotlivých teplotných pásiem. Slúži na analýzu frekvencie výskytu rôznych teplotných podmienok v sledovanom období.
+Dotaz zobrazuje frekvenciu výskytu jednotlivých teplotných pásiem. Vizualizácia poskytuje prehľad o dominantných teplotných podmienkach v sledovanom období.
 
 ```sql
 SELECT WEATHER_BAND, COUNT(*) AS DAYS_COUNT
@@ -370,11 +394,19 @@ GROUP BY WEATHER_BAND
 ORDER BY DAYS_COUNT DESC;
 ```
 
+<p align="center">
+  <img src="/img/Graf 4.png" alt="Teplotné pásma" width="100%">
+</p>
+
+<p align="center">
+  <em>Graf 4 Rozdelenie predpovedí podľa teplotného pásma</em>
+</p>
+
 ---
 
 ### 4.5 Percento lokalít s očakávaným dažďom v čase
 
-Dotaz vypočítava percentuálny podiel lokalít, v ktorých sa v daný deň očakával výskyt zrážok. Analýza umožňuje sledovať časový vývoj pravdepodobnosti dažďa na úrovni celého sledovaného územia.
+Dotaz vypočítava percentuálny podiel lokalít s očakávanými zrážkami v jednotlivých dňoch. Časová rada umožňuje sledovať variabilitu výskytu dažďa v čase.
 
 ```sql
 SELECT DATE_KEY,
@@ -383,6 +415,14 @@ FROM DIMENSIONAL.FACT_WEATHER_DAY
 GROUP BY DATE_KEY
 ORDER BY DATE_KEY;
 ```
+
+<p align="center">
+  <img src="/img/Graf 5.png" alt="Percento lokalít s dažďom" width="100%">
+</p>
+
+<p align="center">
+  <em>Graf 5 Percento lokalít s očakávaným dažďom v čase</em>
+</p>
 
 ---
 
