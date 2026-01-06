@@ -12,67 +12,89 @@ Projekt slúži ako **referenčná ukážka správnej dokumentácie, implementá
 
 ## 1. Úvod a popis zdrojových dát
 
-**Téma projektu:**
-Analýza denných predpovedí počasia pre rôzne lokality po svete.
+V tomto projekte analyzujeme dáta o **denných predpovediach počasia** pre rôzne geografické lokality po celom svete.  
+Cieľom analýzy je porozumieť:
 
-**Prečo sme si vybrali tento dataset:**
-Dataset pochádza zo **Snowflake Marketplace** (Weather Source LLC: *Frostbyte – OnPoint ID Forecast Day*). Je voľne dostupný v sample verzii, obsahuje reálne hyper-lokálne meteorologické predpovede a je vhodný na precvičenie ELT procesov, dimenzionálneho modelovania a práce s databázou Snowflake.
+- vývoju teplôt v čase,
+- výskytu a intenzite zrážok,
+- rozdielom v počasí medzi lokalitami,
+- vzťahom medzi typom zrážok a teplotou.
 
-**Biznis procesy, ktoré dáta podporujú:**
+Zdrojové dáta pochádzajú zo **Snowflake Marketplace** a sú poskytované spoločnosťou **Weather Source LLC** v rámci datasetu *Frostbyte – OnPoint ID Forecast Day*, dostupného na nasledujúcom odkaze:  
+https://app.snowflake.com/marketplace/listing/GZTSZAS2KF/weather-source-llc-frostbyte
 
-* Plánovanie predaja v retail a food sektore (vplyv počasia na dopyt)
-* Logistika a doprava (riziká zrážok a sneženia)
-* Energetika (predikcia spotreby energie podľa teploty)
-* Poistenie (hodnotenie rizík extrémneho počasia)
+Dataset obsahuje tri hlavné tabuľky v rámci normalizovaného modelu (3NF):
 
-**Typy údajov:**
-Časové údaje (dátumy), geografické údaje (poštové kódy, mestá, krajiny) a numerické metriky (teploty v °F, zrážky a sneženie v palcoch, vlhkosť, vietor, oblačnosť).
+- **DATE** – časové údaje,
+- **LOCATION** – geografické údaje,
+- **WEATHER_DAY** – denné meteorologické merania.
 
-**Účel analýzy:**
-Cieľom je analyzovať trendy teplôt a zrážok a ich vzťahy naprieč lokalitami a časom. Dimenzionálny model umožňuje efektívne odpovedať na reportingové otázky, ako napríklad identifikáciu najteplejších miest alebo vplyv typu zrážok na teplotu.
+Účelom ELT procesu bolo tieto dáta pripraviť, transformovať a sprístupniť pre **viacdimenzionálnu analýzu** pomocou dimenzionálneho modelu typu **Star Schema**.
 
-**Zdrojová tabuľka:**
-`WEATHER_SOURCE_LLC_FROSTBYTE.ONPOINT_ID.FORECAST_DAY` – denné predpovede počasia pre vybrané poštové kódy.
+---
 
-### ERD pôvodnej normalizovanej štruktúry dát (3NF)
+### 1.1 Dátová architektúra
 
-![Normalizovaný ERD](/img/erd_normalized_3nf.png)
+Surové zdrojové dáta sú usporiadané v relačnom modeli v tretej normálnej forme (3NF), ktorý je znázornený na **entitno-relačnom diagrame (ERD)**:
 
-Pôvodná štruktúra bola denormalizovaná; pre účely návrhu ERD bola rozdelená do tretej normálnej formy (ENTITY: LOCATION, DATE, WEATHER_DAY).
+<p align="center">
+  <img src="/img/erd_normalized_3nf.png" alt="Normalizovaný ERD" width="700">
+</p>
+
+<p align="center">
+  <em>Obrázok 1 Entitno-relačná schéma normalizovaného modelu (3NF)</em>
+</p>
 
 ---
 
 ## 2. Návrh dimenzionálneho modelu
 
-Bol navrhnutý dimenzionálny model typu **Star Schema** pozostávajúci z jednej faktovej tabuľky a piatich dimenzií.
+Na základe normalizovanej štruktúry zdrojových dát bol navrhnutý **dimenzionálny model typu Star Schema**, ktorý pozostáva z **jednej faktovej tabuľky** a **piatich dimenzií**. Model je optimalizovaný pre analytické dotazy a reporting v prostredí dátového skladu.
 
-**Faktová tabuľka:** `DIMENSIONAL.FACT_WEATHER_DAY`
+<p align="center">
+  <img src="/img/star_schema_dimensional.png" alt="Star Schema" width="800">
+</p>
 
-* Kompozitný kľúč: `DATE_KEY`, `LOCATION_KEY`
-* Cudzie kľúče: `DATE_KEY`, `LOCATION_KEY`, `WEATHER_BAND`, `PRECIPITATION_TYPE`, `SOURCE_KEY`
-* Hlavné metriky: `AVG_TEMP_F`, `PRECIPITATION_IN`, `SNOWFALL_IN`
-* Odvodené metriky pomocou analytických funkcií:
+<p align="center">
+  <em>Obrázok 2: Dimenzionálny model typu Star Schema</em>
+</p>
 
-  * `TEMP_DAY_DELTA` – medzidenná zmena teploty
-  * `PRECIPITATION_7D_SUM` – sedemdňový kumulatívny úhrn zrážok
+### Faktová tabuľka
 
-**Dimenzie:**
+**DIMENSIONAL.FACT_WEATHER_DAY**
 
-1. **DIM_DATE** – časová dimenzia (SCD typ 0)
-2. **DIM_LOCATION** – lokalita (SCD typ 2)
-3. **DIM_WEATHER_BAND** – teplotné pásma (SCD typ 1)
-4. **DIM_PRECIPITATION_TYPE** – typ zrážok (SCD typ 1)
-5. **DIM_SOURCE** – zdroj dát (SCD typ 0)
+- **Kompozitný kľúč:** `DATE_KEY`, `LOCATION_KEY`
+- **Cudzie kľúče:**  
+  `DATE_KEY`, `LOCATION_KEY`, `WEATHER_BAND`, `PRECIPITATION_TYPE`, `SOURCE_KEY`
+- **Hlavné metriky:**  
+  `AVG_TEMP_F`, `PRECIPITATION_IN`, `SNOWFALL_IN`
+- **Odvodené metriky (analytické funkcie):**
+  - `TEMP_DAY_DELTA` – medzidenná zmena priemernej teploty,
+  - `PRECIPITATION_7D_SUM` – sedemdňový kumulatívny úhrn zrážok.
 
-### Star Schema
+Faktová tabuľka uchováva denné meteorologické merania pre jednotlivé lokality a slúži ako centrálna analytická entita dimenzionálneho modelu.
 
-![Star Schema](/img/star_schema_dimensional.png)
+### Dimenzie
+
+- **DIM_DATE** – časová dimenzia (SCD typ 0),
+- **DIM_LOCATION** – dimenzia lokality s historizáciou zmien (SCD typ 2),
+- **DIM_WEATHER_BAND** – klasifikácia teplotných pásiem (SCD typ 1),
+- **DIM_PRECIPITATION_TYPE** – typ zrážok (SCD typ 1),
+- **DIM_SOURCE** – zdroj meteorologických dát (SCD typ 0).
+
+Navrhnutý dimenzionálny model umožňuje **viacdimenzionálnu analýzu** vývoja počasia v čase, porovnávanie lokalít a efektívne vytváranie analytických pohľadov a vizualizácií.
 
 ---
 
 ## 3. ELT proces v Snowflake
 
+ELT (Extract–Load–Transform) je prístup spracovania dát, pri ktorom sú zdrojové dáta najskôr sprístupnené zo zdrojového systému, následne uložené do databázy a transformácie sú vykonávané priamo v databázovom prostredí. Tento prístup je typický pre cloudové dátové sklady, ako je Snowflake.
+
+---
+
 ### 3.1 Vytvorenie databázy a schém
+
+V tomto kroku je vytvorená databáza projektu a jednotlivé schémy reprezentujúce vrstvy ELT architektúry: **STAGING**, **NORMALIZED** a **DIMENSIONAL**
 
 ```sql
 CREATE OR REPLACE DATABASE PEACOCK_GIRAFFE_PROJECT_DB;
@@ -82,18 +104,26 @@ CREATE OR REPLACE SCHEMA STAGING;
 CREATE OR REPLACE SCHEMA DIMENSIONAL;
 CREATE OR REPLACE SCHEMA NORMALIZED;
 ```
+---
 
-### 3.2 Extract – načítanie dát zo Snowflake Marketplace
+### 3.2 Extract & Load – načítanie dát zo Snowflake Marketplace do STAGING
+
+Keďže zdrojový dataset pochádza priamo zo Snowflake Marketplace, fázy Extract a Load sú realizované v jednom kroku.
+Príkaz SELECT zabezpečuje prístup k zdrojovým dátam (Extract), zatiaľ čo CREATE TABLE AS SELECT zabezpečuje ich fyzické uloženie do staging vrstvy (Load).
 
 ```sql
 CREATE OR REPLACE TABLE STAGING.STG_FORECAST_DAY AS
 SELECT *
 FROM WEATHER_SOURCE_LLC_FROSTBYTE.ONPOINT_ID.FORECAST_DAY;
 ```
+---
 
-### 3.3 Transform – dimenzie
+### 3.3 Transform – tvorba dimenzií
+
+V transformačnej fáze sú zo staging vrstvy vytvorené jednotlivé dimenzie dimenzionálneho modelu. Transformácie zahŕňajú výber relevantných atribútov, odvodenie časových charakteristík a klasifikáciu meteorologických údajov do analyticky využiteľných kategórií.
 
 #### DIM_DATE
+Časová dimenzia obsahuje odvodené atribúty z dátumu predpovede a je implementovaná ako SCD typ 0, keďže historické hodnoty sa nemenia.
 
 ```sql
 CREATE OR REPLACE TABLE DIMENSIONAL.DIM_DATE AS
@@ -109,7 +139,8 @@ SELECT DISTINCT
 FROM STAGING.STG_FORECAST_DAY;
 ```
 
-#### DIM_LOCATION (SCD typ 2)
+#### DIM_LOCATION
+Dimenzia lokality uchováva informácie o geografickej polohe a je navrhnutá ako pomaly sa meniaca dimenzia typu 2 (SCD 2), čo umožňuje historizáciu zmien atribútov lokality v čase.
 
 ```sql
 CREATE OR REPLACE TABLE DIMENSIONAL.DIM_LOCATION AS
@@ -128,6 +159,7 @@ FROM (
 ```
 
 #### DIM_WEATHER_BAND
+Dimenzia teplotných pásiem klasifikuje priemerné denné teploty do logických kategórií. Je implementovaná ako SCD typ 1, pri ktorom sa zmeny hodnôt prepíšu bez uchovania histórie, keďže historický stav tejto klasifikácie nie je analyticky relevantný.
 
 ```sql
 CREATE OR REPLACE TABLE DIMENSIONAL.DIM_WEATHER_BAND AS
@@ -143,6 +175,7 @@ FROM STAGING.STG_FORECAST_DAY;
 ```
 
 #### DIM_PRECIPITATION_TYPE
+Dimenzia typu zrážok rozdeľuje dni podľa výskytu dažďa, sneženia alebo absencie zrážok. Rovnako ako pri teplotných pásmach je použitý SCD typ 1, keďže ide o odvodenú klasifikáciu bez potreby historizácie.
 
 ```sql
 CREATE OR REPLACE TABLE DIMENSIONAL.DIM_PRECIPITATION_TYPE AS
@@ -156,6 +189,7 @@ FROM STAGING.STG_FORECAST_DAY;
 ```
 
 #### DIM_SOURCE
+Dimenzia zdroja dát obsahuje základné informácie o pôvode datasetu. Keďže tieto údaje sú nemenné, dimenzia je implementovaná ako SCD typ 0.
 
 ```sql
 CREATE OR REPLACE TABLE DIMENSIONAL.DIM_SOURCE AS
@@ -165,8 +199,12 @@ SELECT
     'Frostbyte' AS DATASET_NAME,
     'Snowflake Marketplace' AS INGEST_METHOD;
 ```
+---
 
-### 3.4 Load – faktová tabuľka
+### 3.4 Load – vytvorenie faktovej tabuľky
+
+V tomto kroku sú dáta načítané do centrálnej faktovej tabuľky FACT_WEATHER_DAY, ktorá spája jednotlivé dimenzie a obsahuje denné meteorologické merania.
+V súlade s ELT prístupom sú transformácie a výpočty odvodených metrík realizované priamo počas načítania dát do cieľovej tabuľky.
 
 ```sql
 CREATE OR REPLACE TABLE DIMENSIONAL.FACT_WEATHER_DAY AS
@@ -210,8 +248,11 @@ JOIN DIMENSIONAL.DIM_PRECIPITATION_TYPE pt
 JOIN DIMENSIONAL.DIM_SOURCE s
     ON s.SOURCE_KEY = 1;
 ```
+---
 
 ### 3.5 Normalizovaný model (3NF)
+
+Popri dimenzionálnom modeli je vytvorený aj normalizovaný model v tretej normálnej forme (3NF), ktorý reprezentuje pôvodnú relačnú štruktúru zdrojových dát a slúži najmä na dokumentačné účely.
 
 ```sql
 CREATE OR REPLACE TABLE NORMALIZED.LOCATION AS
@@ -246,8 +287,11 @@ SELECT
     PROBABILITY_OF_SNOW_PCT
 FROM STAGING.STG_FORECAST_DAY;
 ```
+---
 
 ### 3.6 Validácia dát
+
+Záverečný krok ELT procesu sa zameriava na základnú validáciu dát, konkrétne na kontrolu integrity cudzích kľúčov a overenie rozsahov hodnôt hlavných metrík vo faktovej tabuľke.
 
 ```sql
 SELECT COUNT(*)
@@ -261,10 +305,21 @@ FROM DIMENSIONAL.FACT_WEATHER_DAY;
 ---
 
 ## 4. Vizualizácia dát
-![Dashboard vizualizácií](/img/Dashboard.png)
+V tejto časti sú prezentované vybrané analytické dotazy nad dimenzionálnym modelom, ktoré demonštrujú možnosti viacdimenzionálnej analýzy meteorologických dát a slúžia ako podklad pre následné vizualizácie.
 
+<p align="center">
+  <img src="/img/Dashboard.png" alt="Dashboard vizualizácií" width="900">
+</p>
 
-### 1. Priemerná predpovedaná teplota v čase
+<p align="center">
+  <em>Obrázok 3: Dashboard vizualizácií meteorologických dát</em>
+</p>
+
+---
+
+### 4.1 Priemerná predpovedaná teplota v čase
+
+Dotaz analyzuje vývoj priemernej predpovedanej teploty v čase naprieč všetkými lokalitami. Výsledok umožňuje identifikovať globálne teplotné trendy a sezónne výkyvy.
 
 ```sql
 SELECT d.FULL_DATE, AVG(f.AVG_TEMP_F) AS AVG_TEMP_F
@@ -274,7 +329,11 @@ GROUP BY d.FULL_DATE
 ORDER BY d.FULL_DATE;
 ```
 
-### 2. Top 15 miest podľa priemernej predpovedanej teploty
+---
+
+### 4.2 Top 15 miest podľa priemernej predpovedanej teploty
+
+Dotaz identifikuje lokality s najvyššou priemernou predpovedanou teplotou za celé sledované obdobie. Analýza je vhodná na porovnanie klimatických podmienok medzi mestami.
 
 ```sql
 SELECT l.CITY_NAME, AVG(f.AVG_TEMP_F) AS AVG_TEMP_F
@@ -285,7 +344,11 @@ ORDER BY AVG_TEMP_F DESC
 LIMIT 15;
 ```
 
-### 3. Priemerná teplota podľa typu zrážok
+---
+
+### 4.3 Priemerná teplota podľa typu zrážok
+
+Cieľom dotazu je preskúmať vzťah medzi typom zrážok a priemernou teplotou. Výsledok ukazuje, ako sa teplota líši v dňoch bez zrážok, s dažďom alebo so snežením.
 
 ```sql
 SELECT PRECIPITATION_TYPE, AVG(AVG_TEMP_F) AS AVG_TEMP_F
@@ -294,7 +357,11 @@ GROUP BY PRECIPITATION_TYPE
 ORDER BY AVG_TEMP_F DESC;
 ```
 
-### 4. Rozdelenie predpovedí podľa teplotného pásma
+---
+
+### 4.4 Rozdelenie predpovedí podľa teplotného pásma
+
+Dotaz zobrazuje počet dní spadajúcich do jednotlivých teplotných pásiem. Slúži na analýzu frekvencie výskytu rôznych teplotných podmienok v sledovanom období.
 
 ```sql
 SELECT WEATHER_BAND, COUNT(*) AS DAYS_COUNT
@@ -303,7 +370,11 @@ GROUP BY WEATHER_BAND
 ORDER BY DAYS_COUNT DESC;
 ```
 
-### 5. Percento lokalít s očakávaným dažďom v čase
+---
+
+### 4.5 Percento lokalít s očakávaným dažďom v čase
+
+Dotaz vypočítava percentuálny podiel lokalít, v ktorých sa v daný deň očakával výskyt zrážok. Analýza umožňuje sledovať časový vývoj pravdepodobnosti dažďa na úrovni celého sledovaného územia.
 
 ```sql
 SELECT DATE_KEY,
