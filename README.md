@@ -1,10 +1,6 @@
 # GlobalWeather-ETL
 
-# GlobalWeather-ETL
-
-Tento repozitár predstavuje ukážkovú implementáciu **ELT procesu v prostredí Snowflake** a návrh **dátového skladu s hviezdicovou schémou (Star Schema)** na základe meteorologických dát.
-
-Projekt pracuje s datasetom **Weather Source LLC – Frostbyte: OnPoint ID Forecast Day**, ktorý je dostupný prostredníctvom **Snowflake Marketplace** a obsahuje denné hyper-lokálne predpovede počasia pre vybrané geografické lokality.
+Tento repozitár predstavuje ukážkovú implementáciu **ELT procesu v prostredí Snowflake** a návrh **dátového skladu s hviezdicovou schémou (Star Schema)** na základe meteorologických dát. Projekt pracuje s datasetom **Weather Source LLC – Frostbyte: OnPoint ID Forecast Day**, ktorý je dostupný prostredníctvom **Snowflake Marketplace** a obsahuje denné hyper-lokálne predpovede počasia pre vybrané geografické lokality.
 
 Cieľom projektu je analyzovať **teplotné a zrážkové trendy v čase a priestore** a demonštrovať návrh **normalizovaného modelu (3NF)** aj **dimenzionálneho modelu** vhodného pre analytické dotazy a reporting.
 
