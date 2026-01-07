@@ -25,11 +25,11 @@ https://app.snowflake.com/marketplace/listing/GZTSZAS2KF/weather-source-llc-fros
 
 Dataset obsahuje tri hlavné tabuľky v rámci normalizovaného modelu (3NF):
 
-- **DATE** – časové údaje,
-- **LOCATION** – geografické údaje,
-- **WEATHER_DAY** – denné meteorologické merania.
+- `DATE` – časové údaje,
+- `LOCATION` – geografické údaje,
+- `WEATHER_DAY` – denné meteorologické merania.
 
-Účelom ELT procesu bolo tieto dáta pripraviť, transformovať a sprístupniť pre **viacdimenzionálnu analýzu** pomocou dimenzionálneho modelu typu **Star Schema**.
+Účelom ELT procesu bolo tieto dáta pripraviť, transformovať a sprístupniť pre **viacdimenzionálnu analýzu** pomocou dimenzionálneho modelu typu **hviezdicová schéma (Star Schema)**.
 
 ---
 
@@ -49,23 +49,24 @@ Surové zdrojové dáta sú usporiadané v relačnom modeli v tretej normálnej 
 
 ## 2. Návrh dimenzionálneho modelu
 
-Na základe normalizovanej štruktúry zdrojových dát bol navrhnutý **dimenzionálny model typu Star Schema**, ktorý pozostáva z **jednej faktovej tabuľky** a **piatich dimenzií**. Model je optimalizovaný pre analytické dotazy a reporting v prostredí dátového skladu.
+Na základe normalizovanej štruktúry zdrojových dát bol navrhnutý **dimenzionálny model typu hviezdicovej schémy**, ktorý pozostáva z **jednej faktovej tabuľky** a **piatich dimenzií**. Model je optimalizovaný pre analytické dotazy a reporting v prostredí dátového skladu.
 
 <p align="center">
   <img src="/img/star_schema_dimensional.png" alt="Star Schema" width="800">
 </p>
 
 <p align="center">
-  <em>Obrázok 2: Dimenzionálny model typu Star Schema</em>
+  <em>Obrázok 2: Dimenzionálny model typu hviezdicová schéma</em>
 </p>
 
 ### Faktová tabuľka
 
 **DIMENSIONAL.FACT_WEATHER_DAY**
 
-- **Kompozitný kľúč:** `DATE_KEY`, `LOCATION_KEY`
+- **Kompozitný kľúč:**
+  `DATE_KEY`, `LOCATION_KEY`, `SOURCE_KEY`
 - **Cudzie kľúče:**  
-  `DATE_KEY`, `LOCATION_KEY`, `WEATHER_BAND`, `PRECIPITATION_TYPE`, `SOURCE_KEY`
+  `DATE_KEY`, `LOCATION_KEY`, `SOURCE_KEY`, `WEATHER_BAND`, `PRECIPITATION_TYPE`
 - **Hlavné metriky:**  
   `AVG_TEMP_F`, `PRECIPITATION_IN`, `SNOWFALL_IN`
 - **Odvodené metriky (analytické funkcie):**
@@ -76,11 +77,11 @@ Faktová tabuľka uchováva denné meteorologické merania pre jednotlivé lokal
 
 ### Dimenzie
 
-- **DIM_DATE** – časová dimenzia (SCD typ 0),
-- **DIM_LOCATION** – dimenzia lokality s historizáciou zmien (SCD typ 2),
-- **DIM_WEATHER_BAND** – klasifikácia teplotných pásiem (SCD typ 1),
-- **DIM_PRECIPITATION_TYPE** – typ zrážok (SCD typ 1),
-- **DIM_SOURCE** – zdroj meteorologických dát (SCD typ 0).
+- `DIM_DATE` – časová dimenzia (SCD typ 0),
+- `DIM_LOCATION` – dimenzia lokality s historizáciou zmien (SCD typ 1),
+- `DIM_WEATHER_BAND` – klasifikácia teplotných pásiem (SCD typ 0),
+- `DIM_PRECIPITATION_TYPE` – typ zrážok (SCD typ 0),
+- `DIM_SOURCE` – zdroj meteorologických dát (SCD typ 0).
 
 Navrhnutý dimenzionálny model umožňuje **viacdimenzionálnu analýzu** vývoja počasia v čase, porovnávanie lokalít a efektívne vytváranie analytických pohľadov a vizualizácií.
 
@@ -123,7 +124,7 @@ FROM WEATHER_SOURCE_LLC_FROSTBYTE.ONPOINT_ID.FORECAST_DAY;
 V transformačnej fáze sú zo staging vrstvy vytvorené jednotlivé dimenzie dimenzionálneho modelu. Transformácie zahŕňajú výber relevantných atribútov, odvodenie časových charakteristík a klasifikáciu meteorologických údajov do analyticky využiteľných kategórií.
 
 #### DIM_DATE
-Časová dimenzia obsahuje odvodené atribúty z dátumu predpovede a je implementovaná ako SCD typ 0, keďže historické hodnoty sa nemenia.
+Časová dimenzia obsahuje odvodené atribúty z dátumu predpovede a je implementovaná ako SCD Typ 0, keďže historické hodnoty sa nemenia.
 
 ```sql
 CREATE OR REPLACE TABLE DIMENSIONAL.DIM_DATE AS
@@ -140,7 +141,7 @@ FROM STAGING.STG_FORECAST_DAY;
 ```
 
 #### DIM_LOCATION
-Dimenzia lokality uchováva informácie o geografickej polohe a je navrhnutá ako pomaly sa meniaca dimenzia typu 2 (SCD 2), čo umožňuje historizáciu zmien atribútov lokality v čase.
+Dimenzia lokality uchováva informácie o geografickej polohe a je implementovaná ako pomaly sa meniaca dimenzia SCD Typ 1, kde sa zmeny atribútov prepíšu bez uchovania histórie.
 
 ```sql
 CREATE OR REPLACE TABLE DIMENSIONAL.DIM_LOCATION AS
@@ -159,7 +160,7 @@ FROM (
 ```
 
 #### DIM_WEATHER_BAND
-Dimenzia teplotných pásiem klasifikuje priemerné denné teploty do logických kategórií. Je implementovaná ako SCD typ 1, pri ktorom sa zmeny hodnôt prepíšu bez uchovania histórie, keďže historický stav tejto klasifikácie nie je analyticky relevantný.
+Dimenzia teplotných pásiem klasifikuje priemerné denné teploty do logických kategórií. Je implementovaná ako SCD Typ 0, keďže ide o nemennú klasifikáciu bez potreby historizácie.
 
 ```sql
 CREATE OR REPLACE TABLE DIMENSIONAL.DIM_WEATHER_BAND AS
@@ -175,7 +176,7 @@ FROM STAGING.STG_FORECAST_DAY;
 ```
 
 #### DIM_PRECIPITATION_TYPE
-Dimenzia typu zrážok rozdeľuje dni podľa výskytu dažďa, sneženia alebo absencie zrážok. Rovnako ako pri teplotných pásmach je použitý SCD typ 1, keďže ide o odvodenú klasifikáciu bez potreby historizácie.
+Dimenzia typu zrážok rozdeľuje dni podľa výskytu dažďa, sneženia alebo absencie zrážok. Ide o odvodenú klasifikáciu implementovanú ako SCD Typ 0.
 
 ```sql
 CREATE OR REPLACE TABLE DIMENSIONAL.DIM_PRECIPITATION_TYPE AS
@@ -189,7 +190,7 @@ FROM STAGING.STG_FORECAST_DAY;
 ```
 
 #### DIM_SOURCE
-Dimenzia zdroja dát obsahuje základné informácie o pôvode datasetu. Keďže tieto údaje sú nemenné, dimenzia je implementovaná ako SCD typ 0.
+Dimenzia zdroja dát obsahuje základné informácie o pôvode datasetu. Keďže tieto údaje sú nemenné, dimenzia je implementovaná ako SCD Typ 0.
 
 ```sql
 CREATE OR REPLACE TABLE DIMENSIONAL.DIM_SOURCE AS
