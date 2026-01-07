@@ -38,7 +38,7 @@ Dataset obsahuje tri hlavné tabuľky v rámci normalizovaného modelu (3NF):
 Surové zdrojové dáta sú usporiadané v relačnom modeli v tretej normálnej forme (3NF), ktorý je znázornený na **entitno-relačnom diagrame (ERD)**:
 
 <p align="center">
-  <img src="/img/erd_normalized_3nf.png" alt="Normalizovaný ERD" width="700">
+  <img src="/img/Obr 1.png" alt="Normalizovaný ERD" width="100%">
 </p>
 
 <p align="center">
@@ -52,7 +52,7 @@ Surové zdrojové dáta sú usporiadané v relačnom modeli v tretej normálnej 
 Na základe normalizovanej štruktúry zdrojových dát bol navrhnutý **dimenzionálny model typu hviezdicovej schémy**, ktorý pozostáva z **jednej faktovej tabuľky** a **piatich dimenzií**. Model je optimalizovaný pre analytické dotazy a reporting v prostredí dátového skladu.
 
 <p align="center">
-  <img src="/img/star_schema_dimensional.png" alt="Star Schema" width="800">
+  <img src="/img/Obr 2.png" alt="Star Schema" width="100%">
 </p>
 
 <p align="center">
